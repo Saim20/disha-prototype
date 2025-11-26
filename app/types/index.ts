@@ -1,7 +1,15 @@
 // Types for the MSME Bookkeeping App
 
+export interface User {
+  uid: string
+  email: string | null
+  displayName: string | null
+  photoURL: string | null
+}
+
 export interface Business {
   id: string
+  userId: string // Firebase Auth user ID
   name: string
   type: 'sole_proprietorship' | 'partnership' | 'llp' | 'pvt_ltd'
   industry: string

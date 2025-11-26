@@ -1,5 +1,29 @@
 <template>
   <div class="px-4 py-6">
+    <!-- User Account Section -->
+    <div class="flex items-center gap-4 mb-6 bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800">
+      <img 
+        v-if="user?.photoURL" 
+        :src="user.photoURL" 
+        :alt="user.displayName || 'User'"
+        class="size-12 rounded-full"
+      />
+      <div v-else class="size-12 rounded-full bg-primary-500/20 flex items-center justify-center">
+        <UIcon name="i-heroicons-user" class="size-6 text-primary-400" />
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-white font-medium truncate">{{ user?.displayName || 'User' }}</p>
+        <p class="text-sm text-zinc-400 truncate">{{ user?.email }}</p>
+      </div>
+      <UButton 
+        icon="i-heroicons-arrow-right-start-on-rectangle" 
+        variant="ghost"
+        color="error"
+        size="sm"
+        @click="handleSignOut"
+      />
+    </div>
+
     <!-- Header -->
     <div class="flex items-center gap-4 mb-6">
       <div class="size-16 rounded-2xl bg-primary-500/20 flex items-center justify-center">
@@ -106,11 +130,11 @@
       <UButton 
         block 
         variant="outline"
-        color="red"
-        icon="i-heroicons-arrow-right-on-rectangle"
-        @click="handleReset"
+        color="error"
+        icon="i-heroicons-arrow-right-start-on-rectangle"
+        @click="handleSignOut"
       >
-        Reset App / Switch Business
+        Sign Out
       </UButton>
     </div>
 
@@ -174,6 +198,7 @@
 import { businessTypes, industries } from '~/types'
 
 const router = useRouter()
+const { user, signOut } = useAuth()
 const { business, getDashboardStats, updateBusiness, resetApp } = useStore()
 const { creditScore, getScoreColor } = useCreditScore()
 const toast = useToast()
@@ -243,22 +268,31 @@ const handleSave = async () => {
   if (success) {
     toast.add({
       title: 'Profile updated',
-      color: 'green'
+      color: 'success'
     })
     isEditModalOpen.value = false
   } else {
     toast.add({
       title: 'Update failed',
       description: 'Please try again',
-      color: 'red'
+      color: 'error'
     })
   }
 }
 
-const handleReset = () => {
-  if (confirm('Are you sure you want to reset the app? This will clear your local session. Your data will remain in the cloud.')) {
-    resetApp()
-    router.replace('/onboarding')
+const handleSignOut = async () => {
+  if (confirm('Are you sure you want to sign out?')) {
+    try {
+      resetApp()
+      await signOut()
+      router.replace('/login')
+    } catch (error) {
+      toast.add({
+        title: 'Sign out failed',
+        description: 'Please try again',
+        color: 'error'
+      })
+    }
   }
 }
 </script>

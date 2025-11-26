@@ -1,25 +1,24 @@
 // Firebase configuration for Disha MSME App
 import { initializeApp, getApps, type FirebaseApp, type FirebaseOptions } from 'firebase/app'
 import { getFirestore, type Firestore } from 'firebase/firestore'
+import { getAuth, type Auth } from 'firebase/auth'
 import { getAnalytics, isSupported } from 'firebase/analytics'
 
-// Get config from runtime config (environment variables)
+// Firebase config - will be set by plugin
+let firebaseConfig: FirebaseOptions | null = null
+
+// Set config from plugin (called with runtime config values)
+export const setFirebaseConfig = (config: FirebaseOptions) => {
+  firebaseConfig = config
+}
+
+// Get config
 const getFirebaseConfig = (): FirebaseOptions => {
-  // For client-side, use runtime config
-  if (import.meta.client && typeof useRuntimeConfig === 'function') {
-    const runtimeConfig = useRuntimeConfig()
-    return {
-      apiKey: runtimeConfig.public.firebaseApiKey as string,
-      authDomain: runtimeConfig.public.firebaseAuthDomain as string,
-      projectId: runtimeConfig.public.firebaseProjectId as string,
-      storageBucket: runtimeConfig.public.firebaseStorageBucket as string,
-      messagingSenderId: runtimeConfig.public.firebaseMessagingSenderId as string,
-      appId: runtimeConfig.public.firebaseAppId as string,
-      measurementId: runtimeConfig.public.firebaseMeasurementId as string
-    }
+  if (firebaseConfig) {
+    return firebaseConfig
   }
   
-  // Fallback for server-side (uses process.env)
+  // Fallback to process.env (for server-side or if not set)
   return {
     apiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY || '',
     authDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
@@ -46,13 +45,20 @@ const initializeFirebase = () => {
   return { app, db: firestore }
 }
 
-// Lazy initialization - get Firestore instance
-export const db = (() => {
+// Lazy initialization - get Firestore instance (called only when needed)
+export const getDb = () => {
   if (!firestore) {
     initializeFirebase()
   }
   return firestore!
-})()
+}
+
+// For backward compatibility - use as a getter
+export const db = new Proxy({} as Firestore, {
+  get(target, prop) {
+    return (getDb() as any)[prop]
+  }
+})
 
 // Get Firebase app instance
 export const getApp = () => {

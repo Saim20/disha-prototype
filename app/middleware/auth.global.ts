@@ -1,24 +1,31 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Skip middleware for onboarding page
-  if (to.path === '/onboarding') {
+  // Skip middleware for login page
+  if (to.path === '/login') {
     return
   }
 
-  // Only run on client side
+  // On server-side, skip auth check - let client handle it
+  // This prevents redirect loop since Firebase Auth is client-side only
   if (import.meta.server) {
     return
   }
 
-  const { initializeApp, hasBusinessSetup, isLoading, isInitialized } = useStore()
-  
-  // Initialize app if not already done
-  if (!isInitialized.value) {
-    await initializeApp()
+  const { isAuthenticated } = useAuth()
+  const { hasBusinessSetup, initializeApp, isInitialized } = useStore()
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated.value) {
+    return navigateTo('/login')
   }
 
-  // Wait for loading to complete
-  while (isLoading.value) {
-    await new Promise(resolve => setTimeout(resolve, 50))
+  // Skip business check for onboarding page
+  if (to.path === '/onboarding') {
+    return
+  }
+
+  // Initialize app (load business & transactions from Firestore)
+  if (!isInitialized.value) {
+    await initializeApp()
   }
 
   // Redirect to onboarding if no business is set up

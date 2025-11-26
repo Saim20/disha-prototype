@@ -13,7 +13,7 @@ import {
   onSnapshot,
   type Unsubscribe
 } from 'firebase/firestore'
-import { db, collections } from '~/config/firebase'
+import { getDb, collections } from '~/config/firebase'
 import type { Business, Transaction } from '~/types'
 
 // Business operations
@@ -22,7 +22,7 @@ export const useFirebase = () => {
   // Get business by ID
   const getBusiness = async (businessId: string): Promise<Business | null> => {
     try {
-      const docRef = doc(db, collections.businesses, businessId)
+      const docRef = doc(getDb(), collections.businesses, businessId)
       const docSnap = await getDoc(docRef)
       
       if (docSnap.exists()) {
@@ -35,15 +35,41 @@ export const useFirebase = () => {
     }
   }
 
+  // Get business by user ID
+  const getBusinessByUserId = async (userId: string): Promise<Business | null> => {
+    try {
+      const q = query(
+        collection(getDb(), collections.businesses),
+        where('userId', '==', userId)
+      )
+      
+      const querySnapshot = await getDocs(q)
+      
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0]!
+        return { id: docSnap.id, ...docSnap.data() } as Business
+      }
+      return null
+    } catch (error) {
+      console.error('Error getting business by userId:', error)
+      return null
+    }
+  }
+
   // Create new business
   const createBusiness = async (business: Omit<Business, 'id' | 'createdAt'>): Promise<Business | null> => {
     try {
+      // Remove undefined values to prevent Firestore errors
+      const cleanBusiness = Object.fromEntries(
+        Object.entries(business).filter(([_, value]) => value !== undefined)
+      )
+      
       const businessData = {
-        ...business,
+        ...cleanBusiness,
         createdAt: new Date().toISOString()
       }
       
-      const docRef = await addDoc(collection(db, collections.businesses), businessData)
+      const docRef = await addDoc(collection(getDb(), collections.businesses), businessData)
       return { id: docRef.id, ...businessData } as Business
     } catch (error) {
       console.error('Error creating business:', error)
@@ -54,8 +80,13 @@ export const useFirebase = () => {
   // Update business
   const updateBusinessInDb = async (businessId: string, data: Partial<Business>): Promise<boolean> => {
     try {
-      const docRef = doc(db, collections.businesses, businessId)
-      await updateDoc(docRef, data)
+      // Remove undefined values to prevent Firestore errors
+      const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+      )
+      
+      const docRef = doc(getDb(), collections.businesses, businessId)
+      await updateDoc(docRef, cleanData)
       return true
     } catch (error) {
       console.error('Error updating business:', error)
@@ -67,7 +98,7 @@ export const useFirebase = () => {
   const getTransactions = async (businessId: string): Promise<Transaction[]> => {
     try {
       const q = query(
-        collection(db, collections.transactions),
+        collection(getDb(), collections.transactions),
         where('businessId', '==', businessId),
         orderBy('date', 'desc')
       )
@@ -86,12 +117,17 @@ export const useFirebase = () => {
   // Add transaction
   const addTransactionToDb = async (transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction | null> => {
     try {
+      // Remove undefined values to prevent Firestore errors
+      const cleanTransaction = Object.fromEntries(
+        Object.entries(transaction).filter(([_, value]) => value !== undefined)
+      )
+      
       const transactionData = {
-        ...transaction,
+        ...cleanTransaction,
         createdAt: new Date().toISOString()
       }
       
-      const docRef = await addDoc(collection(db, collections.transactions), transactionData)
+      const docRef = await addDoc(collection(getDb(), collections.transactions), transactionData)
       return { id: docRef.id, ...transactionData } as Transaction
     } catch (error) {
       console.error('Error adding transaction:', error)
@@ -102,7 +138,7 @@ export const useFirebase = () => {
   // Delete transaction
   const deleteTransactionFromDb = async (transactionId: string): Promise<boolean> => {
     try {
-      await deleteDoc(doc(db, collections.transactions, transactionId))
+      await deleteDoc(doc(getDb(), collections.transactions, transactionId))
       return true
     } catch (error) {
       console.error('Error deleting transaction:', error)
@@ -116,7 +152,7 @@ export const useFirebase = () => {
     callback: (transactions: Transaction[]) => void
   ): Unsubscribe => {
     const q = query(
-      collection(db, collections.transactions),
+      collection(getDb(), collections.transactions),
       where('businessId', '==', businessId),
       orderBy('date', 'desc')
     )
@@ -132,6 +168,7 @@ export const useFirebase = () => {
 
   return {
     getBusiness,
+    getBusinessByUserId,
     createBusiness,
     updateBusinessInDb,
     getTransactions,

@@ -130,7 +130,7 @@
     </div>
 
     <!-- Navigation Buttons -->
-    <div class="px-6 pb-8 safe-area-inset-bottom">
+    <div class="px-6 pb-8 mb-4 safe-area-inset-bottom">
       <div class="flex gap-3">
         <UButton 
           v-if="currentStep > 1"

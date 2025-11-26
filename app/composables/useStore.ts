@@ -1,11 +1,10 @@
 import type { Business, Transaction, DashboardStats, MonthlyData } from '~/types'
 
-// Local storage key for business ID
-const BUSINESS_ID_KEY = 'disha_business_id'
-
 export const useStore = () => {
+  const { userId } = useAuth()
   const { 
     getBusiness, 
+    getBusinessByUserId,
     createBusiness, 
     updateBusinessInDb, 
     getTransactions, 
@@ -16,61 +15,37 @@ export const useStore = () => {
 
   const transactions = useState<Transaction[]>('transactions', () => [])
   const business = useState<Business | null>('business', () => null)
-  const isLoading = useState('isLoading', () => true)
+  const isLoading = useState('isLoading', () => false)
   const isInitialized = useState('isInitialized', () => false)
   const unsubscribe = useState<(() => void) | null>('unsubscribe', () => null)
 
-  // Get stored business ID from localStorage
-  const getStoredBusinessId = (): string | null => {
-    if (import.meta.client) {
-      return localStorage.getItem(BUSINESS_ID_KEY)
-    }
-    return null
-  }
-
-  // Store business ID in localStorage
-  const storeBusinessId = (id: string) => {
-    if (import.meta.client) {
-      localStorage.setItem(BUSINESS_ID_KEY, id)
-    }
-  }
-
-  // Clear stored business ID
-  const clearStoredBusinessId = () => {
-    if (import.meta.client) {
-      localStorage.removeItem(BUSINESS_ID_KEY)
-    }
-  }
-
-  // Initialize app - load business and transactions
+  // Initialize app - load business and transactions for current user
   const initializeApp = async () => {
     if (isInitialized.value) return
+    if (!userId.value) {
+      isLoading.value = false
+      return
+    }
     
     isLoading.value = true
     
-    const storedBusinessId = getStoredBusinessId()
+    // Find business by user ID
+    const loadedBusiness = await getBusinessByUserId(userId.value)
     
-    if (storedBusinessId) {
-      const loadedBusiness = await getBusiness(storedBusinessId)
+    if (loadedBusiness) {
+      business.value = loadedBusiness
       
-      if (loadedBusiness) {
-        business.value = loadedBusiness
-        
-        // Load transactions
-        const loadedTransactions = await getTransactions(storedBusinessId)
-        transactions.value = loadedTransactions
-        
-        // Subscribe to real-time updates
-        if (unsubscribe.value) {
-          unsubscribe.value()
-        }
-        unsubscribe.value = subscribeToTransactions(storedBusinessId, (newTransactions) => {
-          transactions.value = newTransactions
-        })
-      } else {
-        // Business not found, clear stored ID
-        clearStoredBusinessId()
+      // Load transactions
+      const loadedTransactions = await getTransactions(loadedBusiness.id)
+      transactions.value = loadedTransactions
+      
+      // Subscribe to real-time updates
+      if (unsubscribe.value) {
+        unsubscribe.value()
       }
+      unsubscribe.value = subscribeToTransactions(loadedBusiness.id, (newTransactions) => {
+        transactions.value = newTransactions
+      })
     }
     
     isLoading.value = false
@@ -78,14 +53,21 @@ export const useStore = () => {
   }
 
   // Create new business (onboarding)
-  const setupBusiness = async (businessData: Omit<Business, 'id' | 'createdAt'>) => {
+  const setupBusiness = async (businessData: Omit<Business, 'id' | 'createdAt' | 'userId'>) => {
+    if (!userId.value) {
+      console.error('No authenticated user')
+      return null
+    }
+    
     isLoading.value = true
     
-    const newBusiness = await createBusiness(businessData)
+    const newBusiness = await createBusiness({
+      ...businessData,
+      userId: userId.value
+    })
     
     if (newBusiness) {
       business.value = newBusiness
-      storeBusinessId(newBusiness.id)
       transactions.value = []
       
       // Subscribe to real-time updates
@@ -142,7 +124,6 @@ export const useStore = () => {
     }
     business.value = null
     transactions.value = []
-    clearStoredBusinessId()
     isInitialized.value = false
   }
 
