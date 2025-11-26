@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+:root {
+  --color-primary-50: #e6eaf2;
+  --color-primary-100: #ccd5e6;
+  --color-primary-200: #99abcc;
+  --color-primary-300: #6681b3;
+  --color-primary-400: #335799;
+  --color-primary-500: #002060;
+  --color-primary-600: #001a4d;
+  --color-primary-700: #00133a;
+  --color-primary-800: #000d26;
+  --color-primary-900: #000613;
+  --color-primary-950: #00030a;
+}
+
+/* Custom scrollbar for mobile feel */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-500);
+  border-radius: 4px;
+}
+
+/* Smooth transitions */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-first responsive utilities */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
