@@ -103,6 +103,15 @@
       >
         Share Credit Report
       </UButton>
+      <UButton 
+        block 
+        variant="outline"
+        color="red"
+        icon="i-heroicons-arrow-right-on-rectangle"
+        @click="handleReset"
+      >
+        Reset App / Switch Business
+      </UButton>
     </div>
 
     <!-- Edit Modal -->
@@ -164,7 +173,8 @@
 <script setup lang="ts">
 import { businessTypes, industries } from '~/types'
 
-const { business, getDashboardStats, updateBusiness } = useStore()
+const router = useRouter()
+const { business, getDashboardStats, updateBusiness, resetApp } = useStore()
 const { creditScore, getScoreColor } = useCreditScore()
 const toast = useToast()
 
@@ -221,8 +231,8 @@ const formatNumber = (num: number) => {
   return Math.round(num).toLocaleString('en-IN')
 }
 
-const handleSave = () => {
-  updateBusiness({
+const handleSave = async () => {
+  const success = await updateBusiness({
     name: editForm.name,
     type: editForm.type as any,
     industry: editForm.industry,
@@ -230,11 +240,25 @@ const handleSave = () => {
     panNumber: editForm.panNumber || undefined
   })
   
-  toast.add({
-    title: 'Profile updated',
-    color: 'green'
-  })
-  
-  isEditModalOpen.value = false
+  if (success) {
+    toast.add({
+      title: 'Profile updated',
+      color: 'green'
+    })
+    isEditModalOpen.value = false
+  } else {
+    toast.add({
+      title: 'Update failed',
+      description: 'Please try again',
+      color: 'red'
+    })
+  }
+}
+
+const handleReset = () => {
+  if (confirm('Are you sure you want to reset the app? This will clear your local session. Your data will remain in the cloud.')) {
+    resetApp()
+    router.replace('/onboarding')
+  }
 }
 </script>

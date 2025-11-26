@@ -168,7 +168,7 @@ const handleSubmit = async () => {
   isSubmitting.value = true
   
   try {
-    addTransaction({
+    const result = await addTransaction({
       type: form.type,
       amount: parseFloat(form.amount),
       category: form.category,
@@ -178,20 +178,24 @@ const handleSubmit = async () => {
       reference: form.reference || undefined
     })
 
-    toast.add({
-      title: 'Transaction added',
-      description: `${form.type === 'income' ? 'Income' : 'Expense'} of ₹${parseFloat(form.amount).toLocaleString('en-IN')} added successfully`,
-      color: 'green'
-    })
+    if (result) {
+      toast.add({
+        title: 'Transaction added',
+        description: `${form.type === 'income' ? 'Income' : 'Expense'} of ₹${parseFloat(form.amount).toLocaleString('en-IN')} added successfully`,
+        color: 'green'
+      })
 
-    // Reset form
-    form.amount = ''
-    form.category = ''
-    form.description = ''
-    form.date = new Date().toISOString().split('T')[0]
-    form.reference = ''
-    
-    open.value = false
+      // Reset form
+      form.amount = ''
+      form.category = ''
+      form.description = ''
+      form.date = new Date().toISOString().split('T')[0]
+      form.reference = ''
+      
+      open.value = false
+    } else {
+      throw new Error('Failed to add transaction')
+    }
   } catch (error) {
     toast.add({
       title: 'Error',

@@ -1,151 +1,153 @@
 import type { Business, Transaction, DashboardStats, MonthlyData } from '~/types'
 
-// Demo data for the prototype
-const demoTransactions: Transaction[] = [
-  {
-    id: '1',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Sales',
-    amount: 45000,
-    description: 'Product sales - Batch #234',
-    date: '2025-11-25',
-    paymentMethod: 'upi',
-    createdAt: '2025-11-25T10:30:00Z'
-  },
-  {
-    id: '2',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Inventory/Stock',
-    amount: 18000,
-    description: 'Raw materials purchase',
-    date: '2025-11-24',
-    paymentMethod: 'bank_transfer',
-    createdAt: '2025-11-24T14:20:00Z'
-  },
-  {
-    id: '3',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Services',
-    amount: 25000,
-    description: 'Consulting fee - ABC Corp',
-    date: '2025-11-23',
-    paymentMethod: 'bank_transfer',
-    createdAt: '2025-11-23T09:15:00Z'
-  },
-  {
-    id: '4',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Salaries',
-    amount: 35000,
-    description: 'Staff salaries - November',
-    date: '2025-11-22',
-    paymentMethod: 'bank_transfer',
-    createdAt: '2025-11-22T11:00:00Z'
-  },
-  {
-    id: '5',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Sales',
-    amount: 62000,
-    description: 'Bulk order - XYZ Ltd',
-    date: '2025-11-20',
-    paymentMethod: 'cheque',
-    createdAt: '2025-11-20T16:45:00Z'
-  },
-  {
-    id: '6',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Utilities',
-    amount: 4500,
-    description: 'Electricity bill',
-    date: '2025-11-19',
-    paymentMethod: 'upi',
-    createdAt: '2025-11-19T10:00:00Z'
-  },
-  {
-    id: '7',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Rent',
-    amount: 15000,
-    description: 'Shop rent - November',
-    date: '2025-11-05',
-    paymentMethod: 'bank_transfer',
-    createdAt: '2025-11-05T09:00:00Z'
-  },
-  {
-    id: '8',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Sales',
-    amount: 38000,
-    description: 'Retail sales - Week 1',
-    date: '2025-11-07',
-    paymentMethod: 'cash',
-    createdAt: '2025-11-07T18:30:00Z'
-  },
-  {
-    id: '9',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Marketing',
-    amount: 8000,
-    description: 'Facebook ads campaign',
-    date: '2025-11-10',
-    paymentMethod: 'card',
-    createdAt: '2025-11-10T14:00:00Z'
-  },
-  {
-    id: '10',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Commission',
-    amount: 12000,
-    description: 'Referral commission',
-    date: '2025-11-15',
-    paymentMethod: 'upi',
-    createdAt: '2025-11-15T11:20:00Z'
-  }
-]
-
-const demoBusiness: Business = {
-  id: 'demo',
-  name: 'Krishna Enterprises',
-  type: 'sole_proprietorship',
-  industry: 'Retail',
-  registrationDate: '2022-04-15',
-  gstNumber: '27AABCU9603R1ZM',
-  panNumber: 'AABCU9603R',
-  createdAt: '2022-04-15T00:00:00Z'
-}
+// Local storage key for business ID
+const BUSINESS_ID_KEY = 'disha_business_id'
 
 export const useStore = () => {
-  const transactions = useState<Transaction[]>('transactions', () => [...demoTransactions])
-  const business = useState<Business | null>('business', () => demoBusiness)
-  const isLoading = useState('isLoading', () => false)
+  const { 
+    getBusiness, 
+    createBusiness, 
+    updateBusinessInDb, 
+    getTransactions, 
+    addTransactionToDb, 
+    deleteTransactionFromDb,
+    subscribeToTransactions 
+  } = useFirebase()
+
+  const transactions = useState<Transaction[]>('transactions', () => [])
+  const business = useState<Business | null>('business', () => null)
+  const isLoading = useState('isLoading', () => true)
+  const isInitialized = useState('isInitialized', () => false)
+  const unsubscribe = useState<(() => void) | null>('unsubscribe', () => null)
+
+  // Get stored business ID from localStorage
+  const getStoredBusinessId = (): string | null => {
+    if (import.meta.client) {
+      return localStorage.getItem(BUSINESS_ID_KEY)
+    }
+    return null
+  }
+
+  // Store business ID in localStorage
+  const storeBusinessId = (id: string) => {
+    if (import.meta.client) {
+      localStorage.setItem(BUSINESS_ID_KEY, id)
+    }
+  }
+
+  // Clear stored business ID
+  const clearStoredBusinessId = () => {
+    if (import.meta.client) {
+      localStorage.removeItem(BUSINESS_ID_KEY)
+    }
+  }
+
+  // Initialize app - load business and transactions
+  const initializeApp = async () => {
+    if (isInitialized.value) return
+    
+    isLoading.value = true
+    
+    const storedBusinessId = getStoredBusinessId()
+    
+    if (storedBusinessId) {
+      const loadedBusiness = await getBusiness(storedBusinessId)
+      
+      if (loadedBusiness) {
+        business.value = loadedBusiness
+        
+        // Load transactions
+        const loadedTransactions = await getTransactions(storedBusinessId)
+        transactions.value = loadedTransactions
+        
+        // Subscribe to real-time updates
+        if (unsubscribe.value) {
+          unsubscribe.value()
+        }
+        unsubscribe.value = subscribeToTransactions(storedBusinessId, (newTransactions) => {
+          transactions.value = newTransactions
+        })
+      } else {
+        // Business not found, clear stored ID
+        clearStoredBusinessId()
+      }
+    }
+    
+    isLoading.value = false
+    isInitialized.value = true
+  }
+
+  // Create new business (onboarding)
+  const setupBusiness = async (businessData: Omit<Business, 'id' | 'createdAt'>) => {
+    isLoading.value = true
+    
+    const newBusiness = await createBusiness(businessData)
+    
+    if (newBusiness) {
+      business.value = newBusiness
+      storeBusinessId(newBusiness.id)
+      transactions.value = []
+      
+      // Subscribe to real-time updates
+      if (unsubscribe.value) {
+        unsubscribe.value()
+      }
+      unsubscribe.value = subscribeToTransactions(newBusiness.id, (newTransactions) => {
+        transactions.value = newTransactions
+      })
+    }
+    
+    isLoading.value = false
+    return newBusiness
+  }
 
   // Add transaction
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'businessId' | 'createdAt'>) => {
-    const newTransaction: Transaction = {
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'businessId' | 'createdAt'>) => {
+    if (!business.value) return null
+    
+    const newTransaction = await addTransactionToDb({
       ...transaction,
-      id: Date.now().toString(),
-      businessId: business.value?.id || 'demo',
-      createdAt: new Date().toISOString()
-    }
-    transactions.value = [newTransaction, ...transactions.value]
+      businessId: business.value.id
+    })
+    
     return newTransaction
   }
 
   // Delete transaction
-  const deleteTransaction = (id: string) => {
-    transactions.value = transactions.value.filter(t => t.id !== id)
+  const deleteTransaction = async (id: string) => {
+    const success = await deleteTransactionFromDb(id)
+    if (success) {
+      transactions.value = transactions.value.filter(t => t.id !== id)
+    }
+    return success
   }
+
+  // Update business profile
+  const updateBusiness = async (data: Partial<Business>) => {
+    if (!business.value) return false
+    
+    const success = await updateBusinessInDb(business.value.id, data)
+    
+    if (success) {
+      business.value = { ...business.value, ...data }
+    }
+    
+    return success
+  }
+
+  // Reset app (logout/clear data)
+  const resetApp = () => {
+    if (unsubscribe.value) {
+      unsubscribe.value()
+    }
+    business.value = null
+    transactions.value = []
+    clearStoredBusinessId()
+    isInitialized.value = false
+  }
+
+  // Check if business is set up
+  const hasBusinessSetup = computed(() => business.value !== null)
 
   // Get dashboard stats
   const getDashboardStats = computed((): DashboardStats => {
@@ -199,22 +201,20 @@ export const useStore = () => {
       .slice(0, 5)
   })
 
-  // Update business profile
-  const updateBusiness = (data: Partial<Business>) => {
-    if (business.value) {
-      business.value = { ...business.value, ...data }
-    }
-  }
-
   return {
     transactions,
     business,
     isLoading,
+    isInitialized,
+    hasBusinessSetup,
+    initializeApp,
+    setupBusiness,
     addTransaction,
     deleteTransaction,
+    updateBusiness,
+    resetApp,
     getDashboardStats,
     getMonthlyData,
-    recentTransactions,
-    updateBusiness
+    recentTransactions
   }
 }

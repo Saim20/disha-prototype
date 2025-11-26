@@ -217,13 +217,21 @@ const openTransactionDetails = (transaction: Transaction) => {
   isDetailsModalOpen.value = true
 }
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (selectedTransaction.value) {
-    deleteTransaction(selectedTransaction.value.id)
-    toast.add({
-      title: 'Transaction deleted',
-      color: 'green'
-    })
+    const success = await deleteTransaction(selectedTransaction.value.id)
+    if (success) {
+      toast.add({
+        title: 'Transaction deleted',
+        color: 'green'
+      })
+    } else {
+      toast.add({
+        title: 'Failed to delete',
+        description: 'Please try again',
+        color: 'red'
+      })
+    }
     isDetailsModalOpen.value = false
     selectedTransaction.value = null
   }

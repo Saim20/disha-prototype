@@ -1,129 +1,25 @@
 import type { CreditScore, CreditFactor, Transaction, Business } from '~/types'
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app'
+import { getFirestore, doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
 
-// Demo data - In production, this would come from Firebase
-const demoTransactions: Transaction[] = [
-  {
-    id: '1',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Sales',
-    amount: 45000,
-    description: 'Product sales - Batch #234',
-    date: '2025-11-25',
-    paymentMethod: 'upi',
-    createdAt: '2025-11-25T10:30:00Z'
-  },
-  {
-    id: '2',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Inventory/Stock',
-    amount: 18000,
-    description: 'Raw materials purchase',
-    date: '2025-11-24',
-    paymentMethod: 'bank_transfer',
-    createdAt: '2025-11-24T14:20:00Z'
-  },
-  {
-    id: '3',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Services',
-    amount: 25000,
-    description: 'Consulting fee - ABC Corp',
-    date: '2025-11-23',
-    paymentMethod: 'bank_transfer',
-    createdAt: '2025-11-23T09:15:00Z'
-  },
-  {
-    id: '4',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Salaries',
-    amount: 35000,
-    description: 'Staff salaries - November',
-    date: '2025-11-22',
-    paymentMethod: 'bank_transfer',
-    createdAt: '2025-11-22T11:00:00Z'
-  },
-  {
-    id: '5',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Sales',
-    amount: 62000,
-    description: 'Bulk order - XYZ Ltd',
-    date: '2025-11-20',
-    paymentMethod: 'cheque',
-    createdAt: '2025-11-20T16:45:00Z'
-  },
-  {
-    id: '6',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Utilities',
-    amount: 4500,
-    description: 'Electricity bill',
-    date: '2025-11-19',
-    paymentMethod: 'upi',
-    createdAt: '2025-11-19T10:00:00Z'
-  },
-  {
-    id: '7',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Rent',
-    amount: 15000,
-    description: 'Shop rent - November',
-    date: '2025-11-05',
-    paymentMethod: 'bank_transfer',
-    createdAt: '2025-11-05T09:00:00Z'
-  },
-  {
-    id: '8',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Sales',
-    amount: 38000,
-    description: 'Retail sales - Week 1',
-    date: '2025-11-07',
-    paymentMethod: 'cash',
-    createdAt: '2025-11-07T18:30:00Z'
-  },
-  {
-    id: '9',
-    businessId: 'demo',
-    type: 'expense',
-    category: 'Marketing',
-    amount: 8000,
-    description: 'Facebook ads campaign',
-    date: '2025-11-10',
-    paymentMethod: 'card',
-    createdAt: '2025-11-10T14:00:00Z'
-  },
-  {
-    id: '10',
-    businessId: 'demo',
-    type: 'income',
-    category: 'Commission',
-    amount: 12000,
-    description: 'Referral commission',
-    date: '2025-11-15',
-    paymentMethod: 'upi',
-    createdAt: '2025-11-15T11:20:00Z'
-  }
-]
-
-const demoBusiness: Business = {
-  id: 'demo',
-  name: 'Krishna Enterprises',
-  type: 'sole_proprietorship',
-  industry: 'Retail',
-  registrationDate: '2022-04-15',
-  gstNumber: '27AABCU9603R1ZM',
-  panNumber: 'AABCU9603R',
-  createdAt: '2022-04-15T00:00:00Z'
+// Firebase config (same as client)
+const firebaseConfig = {
+  apiKey: "AIzaSyDWSHzR_bzRnxKuptpk4zSLTOE9HYbzdvM",
+  authDomain: "disha-84d17.firebaseapp.com",
+  projectId: "disha-84d17",
+  storageBucket: "disha-84d17.firebasestorage.app",
+  messagingSenderId: "288529284328",
+  appId: "1:288529284328:web:169e63781408d7a880dd5d"
 }
+
+// Initialize Firebase for server
+let app: FirebaseApp
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig)
+} else {
+  app = getApps()[0]!
+}
+const db = getFirestore(app)
 
 // Credit score calculation functions
 function calculateConsistencyScore(incomeTransactions: Transaction[]): number {
@@ -270,52 +166,73 @@ export default defineEventHandler(async (event) => {
     })
   }
   
-  // In production, fetch from Firebase using businessId
-  // For prototype, use demo data
-  const business = demoBusiness
-  const transactions = demoTransactions
-  
-  if (businessId !== 'demo' && businessId !== business.id) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: 'Business not found'
-    })
-  }
-  
-  const creditScore = calculateCreditScore(transactions, business)
-  
-  // API Response for banks and financial services
-  return {
-    success: true,
-    data: {
-      businessId: business.id,
-      businessName: business.name,
-      businessType: business.type,
-      industry: business.industry,
-      registrationDate: business.registrationDate,
-      creditScore: {
-        score: creditScore.score,
-        maxScore: 900,
-        grade: creditScore.grade,
-        gradeDescription: getGradeDescription(creditScore.grade),
-        factors: creditScore.factors.map(f => ({
-          name: f.name,
-          score: f.score,
-          maxScore: 100,
-          weight: f.weight,
-          trend: f.trend
-        })),
-        lastUpdated: creditScore.lastUpdated
-      },
-      summary: {
-        totalTransactions: transactions.length,
-        totalIncome: transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-        totalExpenses: transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-      }
-    },
-    meta: {
-      apiVersion: '1.0',
-      generatedAt: new Date().toISOString()
+  try {
+    // Fetch business from Firebase
+    const businessDoc = await getDoc(doc(db, 'businesses', businessId))
+    
+    if (!businessDoc.exists()) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Business not found'
+      })
     }
+    
+    const business = { id: businessDoc.id, ...businessDoc.data() } as Business
+    
+    // Fetch transactions from Firebase
+    const transactionsQuery = query(
+      collection(db, 'transactions'),
+      where('businessId', '==', businessId)
+    )
+    const transactionsSnapshot = await getDocs(transactionsQuery)
+    const transactions: Transaction[] = transactionsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Transaction[]
+    
+    const creditScore = calculateCreditScore(transactions, business)
+    
+    // API Response for banks and financial services
+    return {
+      success: true,
+      data: {
+        businessId: business.id,
+        businessName: business.name,
+        businessType: business.type,
+        industry: business.industry,
+        registrationDate: business.registrationDate,
+        creditScore: {
+          score: creditScore.score,
+          maxScore: 900,
+          grade: creditScore.grade,
+          gradeDescription: getGradeDescription(creditScore.grade),
+          factors: creditScore.factors.map(f => ({
+            name: f.name,
+            score: f.score,
+            maxScore: 100,
+            weight: f.weight,
+            trend: f.trend
+          })),
+          lastUpdated: creditScore.lastUpdated
+        },
+        summary: {
+          totalTransactions: transactions.length,
+          totalIncome: transactions.filter((t: Transaction) => t.type === 'income').reduce((s: number, t: Transaction) => s + t.amount, 0),
+          totalExpenses: transactions.filter((t: Transaction) => t.type === 'expense').reduce((s: number, t: Transaction) => s + t.amount, 0)
+        }
+      },
+      meta: {
+        apiVersion: '1.0',
+        generatedAt: new Date().toISOString()
+      }
+    }
+  } catch (error: any) {
+    if (error.statusCode) {
+      throw error
+    }
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to fetch credit score'
+    })
   }
 })
