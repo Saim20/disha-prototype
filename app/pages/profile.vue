@@ -105,7 +105,7 @@
           <p class="text-xs text-zinc-500">Total Transactions</p>
         </div>
         <div>
-          <p class="text-2xl font-bold text-white">₹{{ formatNumber(stats.avgTransactionValue) }}</p>
+          <p class="text-2xl font-bold text-white">৳{{ formatNumber(stats.avgTransactionValue) }}</p>
           <p class="text-xs text-zinc-500">Avg. Transaction</p>
         </div>
       </div>
@@ -235,7 +235,7 @@ const getBusinessTypeLabel = (type?: string) => {
 
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return 'Not set'
-  return new Date(dateStr).toLocaleDateString('en-IN', {
+  return new Date(dateStr).toLocaleDateString('en-BD', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -253,7 +253,7 @@ const getBusinessAge = (dateStr?: string) => {
 }
 
 const formatNumber = (num: number) => {
-  return Math.round(num).toLocaleString('en-IN')
+  return Math.round(num).toLocaleString('en-BD')
 }
 
 const handleSave = async () => {

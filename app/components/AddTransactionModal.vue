@@ -39,7 +39,7 @@
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <!-- Amount -->
-          <UFormField label="Amount (₹)" required>
+          <UFormField label="Amount (৳)" required>
             <UInput 
               v-model="form.amount" 
               type="number" 
@@ -181,7 +181,7 @@ const handleSubmit = async () => {
     if (result) {
       toast.add({
         title: 'Transaction added',
-        description: `${form.type === 'income' ? 'Income' : 'Expense'} of ₹${parseFloat(form.amount).toLocaleString('en-IN')} added successfully`,
+        description: `${form.type === 'income' ? 'Income' : 'Expense'} of ৳${parseFloat(form.amount).toLocaleString('en-BD')} added successfully`,
         color: 'green'
       })
 

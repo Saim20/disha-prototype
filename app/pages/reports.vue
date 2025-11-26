@@ -24,11 +24,11 @@
     <div class="grid grid-cols-2 gap-3 mb-6">
       <div class="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800">
         <p class="text-xs text-zinc-500 mb-1">Total Income</p>
-        <p class="text-xl font-bold text-emerald-400">₹{{ formatNumber(periodStats.income) }}</p>
+        <p class="text-xl font-bold text-emerald-400">৳{{ formatNumber(periodStats.income) }}</p>
       </div>
       <div class="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800">
         <p class="text-xs text-zinc-500 mb-1">Total Expenses</p>
-        <p class="text-xl font-bold text-red-400">₹{{ formatNumber(periodStats.expenses) }}</p>
+        <p class="text-xl font-bold text-red-400">৳{{ formatNumber(periodStats.expenses) }}</p>
       </div>
     </div>
 
@@ -46,7 +46,7 @@
             class="text-3xl font-bold"
             :class="periodStats.profit >= 0 ? 'text-emerald-400' : 'text-red-400'"
           >
-            {{ periodStats.profit >= 0 ? '+' : '' }}₹{{ formatNumber(periodStats.profit) }}
+            {{ periodStats.profit >= 0 ? '+' : '' }}৳{{ formatNumber(periodStats.profit) }}
           </p>
         </div>
         <div 
@@ -81,7 +81,7 @@
         >
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm text-white">{{ category.name }}</span>
-            <span class="text-sm font-medium text-zinc-300">₹{{ formatNumber(category.amount) }}</span>
+            <span class="text-sm font-medium text-zinc-300">৳{{ formatNumber(category.amount) }}</span>
           </div>
           <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
             <div 
@@ -110,7 +110,7 @@
         >
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm text-white">{{ category.name }}</span>
-            <span class="text-sm font-medium text-emerald-400">₹{{ formatNumber(category.amount) }}</span>
+            <span class="text-sm font-medium text-emerald-400">৳{{ formatNumber(category.amount) }}</span>
           </div>
           <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
             <div 
@@ -221,6 +221,6 @@ const incomeByCategory = computed(() => {
 })
 
 const formatNumber = (num: number) => {
-  return Math.abs(num).toLocaleString('en-IN')
+  return Math.abs(num).toLocaleString('en-BD')
 }
 </script>

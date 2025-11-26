@@ -96,7 +96,7 @@
             class="text-3xl font-bold text-center mb-1"
             :class="selectedTransaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'"
           >
-            {{ selectedTransaction.type === 'income' ? '+' : '-' }}₹{{ selectedTransaction.amount.toLocaleString('en-IN') }}
+            {{ selectedTransaction.type === 'income' ? '+' : '-' }}৳{{ selectedTransaction.amount.toLocaleString('en-BD') }}
           </p>
           <p class="text-zinc-400 text-center mb-6">{{ selectedTransaction.description }}</p>
 
@@ -196,7 +196,7 @@ const formatGroupDate = (dateStr: string) => {
   if (date.toDateString() === today.toDateString()) return 'Today'
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
   
-  return date.toLocaleDateString('en-IN', { 
+  return date.toLocaleDateString('en-BD', { 
     weekday: 'long',
     day: 'numeric', 
     month: 'long',
@@ -205,7 +205,7 @@ const formatGroupDate = (dateStr: string) => {
 }
 
 const formatFullDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
+  return new Date(dateStr).toLocaleDateString('en-BD', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'

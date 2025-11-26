@@ -24,7 +24,7 @@
         class="text-sm font-semibold"
         :class="transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'"
       >
-        {{ transaction.type === 'income' ? '+' : '-' }}₹{{ formatNumber(transaction.amount) }}
+        {{ transaction.type === 'income' ? '+' : '-' }}৳{{ formatNumber(transaction.amount) }}
       </p>
       <p class="text-xs text-zinc-500 capitalize">{{ transaction.paymentMethod.replace('_', ' ') }}</p>
     </div>
@@ -68,7 +68,7 @@ const getCategoryIcon = (category: string) => {
 }
 
 const formatNumber = (num: number) => {
-  return num.toLocaleString('en-IN')
+  return num.toLocaleString('en-BD')
 }
 
 const formatDate = (dateStr: string) => {
@@ -80,6 +80,6 @@ const formatDate = (dateStr: string) => {
   if (date.toDateString() === today.toDateString()) return 'Today'
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
   
-  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+  return date.toLocaleDateString('en-BD', { day: 'numeric', month: 'short' })
 }
 </script>

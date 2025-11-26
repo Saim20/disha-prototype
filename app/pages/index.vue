@@ -23,7 +23,7 @@
           </div>
           <span class="text-xs text-zinc-400">Income</span>
         </div>
-        <p class="text-lg font-bold text-white">₹{{ formatNumber(stats.totalIncome) }}</p>
+        <p class="text-lg font-bold text-white">৳{{ formatNumber(stats.totalIncome) }}</p>
       </div>
       
       <div class="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800">
@@ -33,7 +33,7 @@
           </div>
           <span class="text-xs text-zinc-400">Expenses</span>
         </div>
-        <p class="text-lg font-bold text-white">₹{{ formatNumber(stats.totalExpenses) }}</p>
+        <p class="text-lg font-bold text-white">৳{{ formatNumber(stats.totalExpenses) }}</p>
       </div>
     </div>
 
@@ -43,7 +43,7 @@
         <div>
           <p class="text-sm text-zinc-400 mb-1">Net Profit</p>
           <p class="text-2xl font-bold" :class="stats.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'">
-            {{ stats.netProfit >= 0 ? '+' : '' }}₹{{ formatNumber(stats.netProfit) }}
+            {{ stats.netProfit >= 0 ? '+' : '' }}৳{{ formatNumber(stats.netProfit) }}
           </p>
         </div>
         <div class="text-right">
@@ -122,7 +122,7 @@ const greeting = computed(() => {
 })
 
 const formatNumber = (num: number) => {
-  return Math.abs(num).toLocaleString('en-IN')
+  return Math.abs(num).toLocaleString('en-BD')
 }
 
 const openAddTransaction = (type: 'income' | 'expense') => {
